@@ -1,2 +1,2 @@
-docker build -t file-server .
-docker run -p 2210:2210 --name file-server -v E:\file-server:/app/data --restart=always file-server
+docker build -t duyanh14/universal:file-server .
+docker run -p 2210:2210 --name File-server -v D:\File-server:/app/data --restart=always duyanh14/universal:file-server
