@@ -7,12 +7,7 @@ import (
 	"os"
 )
 
-
 func main() {
-	colors := map[string]string{}
-
-	colors["Kickey"] = "#da1337"
-
 	app := fiber.New()
 
 	app.Get("/", Download)
