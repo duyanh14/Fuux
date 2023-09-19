@@ -1,0 +1,14 @@
+env: dev
+
+listen: 2210
+
+database:
+  host:
+  port:
+  user:
+  password:
+  database:
+
+jwt:
+  secret:
+

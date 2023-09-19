@@ -6,6 +6,7 @@ import (
 	"fuux/internal/api/handler"
 	"fuux/internal/entity"
 	service "fuux/internal/usecase"
+	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"go.uber.org/fx"
@@ -27,8 +28,8 @@ func main() {
 	fx.New(
 		fx.Provide(
 			f,
-			service.NewConfig,
-			fiber.New,
+			pkg.Config,
+			service.Database,
 			handler.Download,
 			handler.Upload,
 			api.Run),
