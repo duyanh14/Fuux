@@ -1,4 +1,4 @@
-package handler
+package resource
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type uploadHandler struct {
 
 func Upload(app *fiber.App) *uploadHandler {
 	handler := uploadHandler{}
-	app.Post("/", handler.upload)
+	app.Post("/:resource", handler.upload)
 
 	return &handler
 }

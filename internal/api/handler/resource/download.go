@@ -1,7 +1,8 @@
-package handler
+package resource
 
 import (
 	"fmt"
+	"fuux/internal/api/middleware"
 	"github.com/gofiber/fiber/v2"
 	"os"
 )
@@ -11,7 +12,9 @@ type downloadHandler struct {
 
 func Download(app *fiber.App) *downloadHandler {
 	handler := downloadHandler{}
-	app.Get("/", handler.download)
+	app.Get("/:resource",
+		middleware.Resource,
+		handler.download)
 
 	return &handler
 }

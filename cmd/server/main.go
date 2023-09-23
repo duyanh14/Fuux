@@ -2,37 +2,49 @@ package main
 
 import (
 	"flag"
-	"fuux/internal/api"
-	"fuux/internal/api/handler"
+	"fuux/internal/api/handler/resource"
 	"fuux/internal/entity"
+	"fuux/internal/repository"
 	service "fuux/internal/usecase"
 	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
-	"go.uber.org/fx"
+	"log"
 )
 
 func f() *entity.Flag {
 	f := &entity.Flag{
-		Config: flag.String("conf", "", "Config file"),
+		Config: flag.String("conf", "", "config resource"),
 	}
 	flag.Parse()
 
 	if f.Config == nil {
-		log.Fatal("no config file")
+		log.Fatal("no config resource")
 	}
+
 	return f
 }
 
 func main() {
-	fx.New(
-		fx.Provide(
-			f,
-			pkg.Config,
-			service.Database,
-			handler.Download,
-			handler.Upload,
-			api.Run),
-		fx.Invoke(func(*fiber.App) {}),
-	).Run()
+	app := fiber.New()
+
+	f := f()
+
+	config, err := pkg.Config(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db, err := service.NewDatabase(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	repository.NewFile(db)
+
+	resource.Download(app)
+	resource.Upload(app)
+
+	if err := app.Listen(":3000"); err != nil {
+		panic(err)
+	}
 }
