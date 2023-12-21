@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/gofiber/fiber/v2 v2.49.2
-	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.16.0
 	go.uber.org/fx v1.20.0
 	gorm.io/driver/postgres v1.5.2
