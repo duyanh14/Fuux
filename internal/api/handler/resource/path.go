@@ -97,7 +97,7 @@ func (h *pathHandler) update(c *fiber.Ctx) error {
 
 	pathModel := rawPath.(*entity.Path)
 
-	if pathModel.ID != data["id"].(string) && pathModel.Path == data["path"].(string) {
+	if pathModel.ID != data["id"].(string) && filepath.Dir(pathModel.Path) == filepath.Dir(data["path"].(string)) {
 		return c.JSON(fiber.Map{"error": "this path exist in database"})
 	}
 
