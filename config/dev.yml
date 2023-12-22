@@ -3,7 +3,7 @@ env: dev
 listen: 2210
 
 database:
-  host: api.kickey.net
+  host: kickey.net
   port: 5433
   user: sa
   password: 8f06216b7esz828826f4202e5a99e2b9

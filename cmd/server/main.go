@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fuux/internal/api/handler/resource"
 	"fuux/internal/entity"
+	"fuux/internal/repository"
+	service "fuux/internal/usecase"
+	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
 	"log"
 )
@@ -24,20 +27,26 @@ func f() *entity.Flag {
 func main() {
 	app := fiber.New()
 
-	//f := f()
-	//
-	//config, err := pkg.Config(f)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//db, err := service.NewDatabase(config)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	env := flag.String("env", "dev", "Environment")
 
-	//repository.NewFile(db)
+	flag.Parse()
 
+	if *env == "" {
+		log.Fatal("No environment")
+	}
+
+	config := pkg.NewConfig(*env)
+
+	db, err := service.NewDatabase(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	repository.File, err = repository.NewFile(db)
+	if err != nil {
+		return
+	}
+	resource.Path(app)
 	resource.Download(app)
 	resource.Upload(app)
 

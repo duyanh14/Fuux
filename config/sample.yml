@@ -3,12 +3,11 @@ env: dev
 listen: 2210
 
 database:
-  host:
-  port:
-  user:
-  password:
-  database:
+  host: kickey.net
+  port: 5433
+  user: sa
+  password: 8f06216b7esz828826f4202e5a99e2b9
+  database: fuux_dev
 
 jwt:
-  secret:
-
+  secret: ziSRI5WpyjnZhMb2XtjxwC1D6BPhkzufWqn7KNb7XJzhdpcnutcR2oakfGSglROl8
