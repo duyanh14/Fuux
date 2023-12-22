@@ -113,9 +113,9 @@ func (h *pathHandler) update(c *fiber.Ctx) error {
 }
 func (h *pathHandler) get(c *fiber.Ctx) error {
 
-	pathName := c.Params("resource")
+	id := c.Params("resource")
 
-	pathExist, rawPath := repository.MatchRecord("path", pathName, &entity.Path{})
+	pathExist, rawPath := repository.MatchRecord("id", id, &entity.Path{})
 	if pathExist == false {
 		return c.JSON(fiber.Map{"error": "path does not exists"})
 	}
@@ -123,7 +123,7 @@ func (h *pathHandler) get(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"error": "can not found your path"})
 	}
 
-	path := pathExist.(*entity.Path)
+	path := rawPath.(*entity.Path)
 
 	return c.JSON(path)
 
