@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"fmt"
 	"fuux/internal/api/middleware"
 	"fuux/internal/entity"
 	"fuux/internal/repository"
@@ -30,7 +29,7 @@ func Path(app *fiber.App) *pathHandler {
 		middleware.Resource,
 		handler.update)
 
-	app.Delete("path/",
+	app.Delete("path/:resource",
 		middleware.Resource,
 		handler.delete)
 
@@ -105,14 +104,21 @@ func (h *pathHandler) update(c *fiber.Ctx) error {
 	return nil
 }
 func (h *pathHandler) get(c *fiber.Ctx) error {
-	access_token := c.Query("access_token")
-	if access_token != "1664661039" {
-		return c.SendString("access_token")
+
+	pathName := c.Params("resource")
+
+	pathExist, rawPath := repository.MatchRecord("path", pathName, &entity.Path{})
+	if pathExist == false {
+		return c.JSON(fiber.Map{"error": "path does not exists"})
 	}
-	path := c.Query("path")
-	path = fmt.Sprintf("./data/%s", path)
-	c.Attachment(path)
-	return c.Download(path)
+	if rawPath == nil {
+		return c.JSON(fiber.Map{"error": "can not found your path"})
+	}
+
+	path := pathExist.(*entity.Path)
+
+	return c.JSON(path)
+
 }
 func (h *pathHandler) getList(c *fiber.Ctx) error {
 	var records = []entity.Path{}
@@ -127,12 +133,25 @@ func (h *pathHandler) getList(c *fiber.Ctx) error {
 	return nil
 }
 func (h *pathHandler) delete(c *fiber.Ctx) error {
-	access_token := c.Query("access_token")
-	if access_token != "1664661039" {
-		return c.SendString("access_token")
+	pathName := c.Params("resource")
+
+	pathExist, rawPath := repository.MatchRecord("path", pathName, &entity.Path{})
+	if pathExist == false {
+		return c.JSON(fiber.Map{"error": "path does not exists"})
 	}
-	path := c.Query("path")
-	path = fmt.Sprintf("./data/%s", path)
-	c.Attachment(path)
-	return c.Download(path)
+	if rawPath == nil {
+		return c.JSON(fiber.Map{"error": "can not found your path"})
+	}
+
+	path := pathExist.(*entity.Path)
+
+	var rs = repository.File.Db.Delete(&path)
+
+	if rs.Error != nil {
+		return c.JSON(fiber.Map{"error": rs.Error.Error()})
+	}
+	if rs.RowsAffected == 1 {
+		return c.JSON(fiber.Map{"success": "true"})
+	}
+	return nil
 }
