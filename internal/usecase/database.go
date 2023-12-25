@@ -35,7 +35,7 @@ func NewDatabase(config *entity.Config) (*gorm.DB, error) {
 	db.AutoMigrate(&entity.ResourceSecret{})
 	db.AutoMigrate(&entity.File{})
 
-	db.AutoMigrate(&entity.PathAccess{})
+	db.AutoMigrate(&entity.ResourceAccess{})
 	db.AutoMigrate(&entity.Path{})
 	return db, nil
 }

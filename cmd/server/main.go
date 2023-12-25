@@ -53,6 +53,12 @@ func main() {
 	if err != nil {
 		return
 	}
+
+	resourceRepository.ResourceAccess, err = resourceRepository.NewResourceAccess(&initDB)
+	if err != nil {
+		return
+	}
+
 	repository.File, err = repository.NewFile(db)
 	if err != nil {
 		return
@@ -63,6 +69,7 @@ func main() {
 	resource.Upload(app)
 
 	usecase.NewResource(config)
+	usecase.NewResourceAccess(config)
 
 	if err := app.Listen(":3000"); err != nil {
 		panic(err)
