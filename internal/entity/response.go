@@ -14,3 +14,10 @@ func ResponseError(err *error.Error) *Response {
 		Message: err.Message,
 	}
 }
+
+func SuccessResponse() *Response {
+	return &Response{
+		Error:   0,
+		Message: "Success",
+	}
+}

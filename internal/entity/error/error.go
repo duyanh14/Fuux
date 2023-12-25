@@ -61,7 +61,7 @@ var (
 	NotEnoughCoin                   = NewError(10037, "Not enough coin")
 	NotFound                        = NewError(10038, "Not found")
 
-	PathExist        = NewError(20000, "Path exist in database")
-	NameExist        = NewError(20001, "Name exist in database")
-	UserRoleNotFound = NewError(20002, "Path record not found")
+	PathExist          = NewError(20000, "Path exist in database")
+	NameExist          = NewError(20001, "Name exist in database")
+	PathRecordNotFound = NewError(20002, "Path record not found")
 )

@@ -36,7 +36,7 @@ func Path(app *fiber.App) *pathHandler {
 
 	app.Delete("path/:resource",
 		middleware.Resource,
-		handler.delete)
+		handler.removePath)
 
 	return &handler
 }
@@ -108,7 +108,7 @@ func (s *pathHandler) removePath(c *fiber.Ctx) error {
 
 	pathModel, err := resourceRepository.Resource.GetByID(id)
 	if err != nil {
-		return c.JSON(entity.ResponseError(errorEntity.UserRoleNotFound))
+		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
 	}
 
 	err = usecase.Resource.RemovePath(pathModel)
@@ -116,7 +116,7 @@ func (s *pathHandler) removePath(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	return c.JSON(entity.Response{})
+	return c.JSON(entity.SuccessResponse())
 }
 
 func (h *pathHandler) create(c *fiber.Ctx) error {
