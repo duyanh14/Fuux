@@ -4,6 +4,8 @@ go 1.19
 
 require (
 	github.com/gofiber/fiber/v2 v2.49.2
+	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/google/uuid v1.5.0
 	github.com/spf13/viper v1.16.0
 	go.uber.org/fx v1.20.0
 	gorm.io/driver/postgres v1.5.2
@@ -13,7 +15,6 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/google/uuid v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect

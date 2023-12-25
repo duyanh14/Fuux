@@ -5,6 +5,7 @@ import (
 	errorEntity "fuux/internal/entity/error"
 	resourceRepository "fuux/internal/repository/resource"
 	"fuux/pkg"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 
@@ -20,11 +21,11 @@ func NewResourceAccess(config *entity.Config) (*resourceAccess, error) {
 	}
 	return ResourceAccess, nil
 }
-func (s *resourceAccess) AddPath(payload *entity.ResourceAccess) (*entity.ResourceAccess, string, error) {
+func (s *resourceAccess) Create(payload *entity.ResourceAccess) (*entity.ResourceAccess, error) {
 
-	if pkg.IsStructContainNil(payload) {
-		return nil, "", errorEntity.FieldRequired.Error
-	}
+	//if pkg.IsStructContainNil(payload) {
+	//	return nil, "", errorEntity.FieldRequired.Error
+	//}
 
 	var name string
 	var path string
@@ -35,29 +36,39 @@ func (s *resourceAccess) AddPath(payload *entity.ResourceAccess) (*entity.Resour
 	// Name
 	_, err := resourceRepository.ResourceAccess.GetBy("name", name)
 	if err == nil {
-		return nil, "", errorEntity.NameAlreadyUse.Error
+		return nil, errorEntity.NameAlreadyUse.Error
 	}
 
 	// Path
 	_, err = resourceRepository.ResourceAccess.GetBy("path", path)
 	if err == nil {
-		return nil, "", errorEntity.PathAlreadyUse.Error
+		return nil, errorEntity.PathAlreadyUse.Error
 	}
 
 	/////////////////
 
 	//timeNow := time.Now()
 
-	resourceAccessModel := &entity.ResourceAccess{
-		ID:     uuid.NewString(),
-		Name:   payload.Name,
-		Path:   payload.Path,
-		Status: payload.Status, // edit sau
-		Expire: payload.Expire, // edit sau
+	model := &entity.ResourceAccess{
+		ID:         uuid.NewString(),
+		Name:       payload.Name,
+		Status:     entity.ResourceAccessStatusEnable, // edit sau
+		Expire:     payload.Expire,
+		Permission: payload.Permission,
 	}
 
-	resourceRepository.ResourceAccess.Create(resourceAccessModel)
-	return resourceAccessModel, "", nil
+	err = resourceRepository.ResourceAccess.Create(model)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := s.TokenGenerate(model)
+	if err != nil {
+		return nil, err
+	}
+	model.AccessToken = &token
+
+	return model, nil
 }
 
 func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.ResourceAccess, string, error) {
@@ -105,8 +116,7 @@ func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.Res
 	}
 	resourceAccessSave := &entity.ResourceAccessSave{
 		Name:   payload.Name,
-		Path:   payload.Path,
-		Status: payload.Status,
+		Status: oldPathByID.Status,
 		Expire: payload.Expire,
 	}
 
@@ -114,7 +124,6 @@ func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.Res
 	return &entity.ResourceAccess{
 		ID:     oldPathByID.ID,
 		Name:   resourceAccessSave.Name,
-		Path:   resourceAccessSave.Path,
 		Status: resourceAccessSave.Status,
 		Expire: resourceAccessSave.Expire,
 	}, "", nil
@@ -130,4 +139,19 @@ func (s *resourceAccess) List(list *entity.ResourceList) (*[]entity.ResourceAcce
 
 func (s *resourceAccess) Get(id string) (*entity.ResourceAccess, error) {
 	return resourceRepository.ResourceAccess.GetByID(id)
+}
+func (s *resourceAccess) TokenGenerate(resourceAccess *entity.ResourceAccess) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["id"] = resourceAccess.ID
+
+	//claims["exp"] = time.Now().Add(time.Hour * 8760).Unix()
+
+	t, err := token.SignedString([]byte(s.config.JWT.Secret))
+	if err != nil {
+		return "", err
+	}
+
+	return t, nil
 }

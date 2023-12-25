@@ -68,6 +68,8 @@ func main() {
 	resource.Download(app)
 	resource.Upload(app)
 
+	resource.ResourceAccess(app)
+
 	usecase.NewResource(config)
 	usecase.NewResourceAccess(config)
 

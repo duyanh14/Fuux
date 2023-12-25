@@ -17,22 +17,22 @@ type resourceAccessHandler struct {
 
 func ResourceAccess(app *fiber.App) *resourceAccessHandler {
 	handler := resourceAccessHandler{}
-	app.Get("path/:id",
+	app.Get("path/access/:id",
 		middleware.Resource,
 		handler.get)
-	app.Get("path",
+	app.Get("path/access",
 		middleware.Resource,
 		handler.getList)
 
-	app.Post("path",
+	app.Post("path/access",
 		middleware.Resource,
 		handler.addPath)
 
-	app.Put("path/:id",
+	app.Put("path/access/:id",
 		middleware.Resource,
 		handler.updatePath)
 
-	app.Delete("path/:id",
+	app.Delete("path/access/:id",
 		middleware.Resource,
 		handler.removePath)
 
@@ -78,7 +78,7 @@ func (h *resourceAccessHandler) addPath(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	pathModel, _, err := usecase.ResourceAccess.AddPath(payload)
+	pathModel, err := usecase.ResourceAccess.Create(payload)
 	if err != nil {
 		exe := errorEntity.ExposeError(err,
 			errorEntity.FieldRequired,
@@ -89,7 +89,9 @@ func (h *resourceAccessHandler) addPath(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(exe))
 	}
 
-	return c.JSON(pathModel)
+	return c.JSON(entity.Response{
+		Data: pathModel,
+	})
 
 	//return c.JSON(entity.Response{Data: fiber.Map{
 	//	"info":         account,
