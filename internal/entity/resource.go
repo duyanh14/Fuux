@@ -43,6 +43,11 @@ type Path struct {
 	Date
 }
 
+type PathSave struct {
+	Name string `json:"name" gorm:"column:name"`
+	Path string `json:"path" gorm:"column:path"`
+}
+
 func (Path) TableName() string {
 	return "path"
 }

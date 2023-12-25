@@ -3,11 +3,15 @@ package resource
 import (
 	"fuux/internal/api/middleware"
 	"fuux/internal/entity"
+	errorEntity "fuux/internal/entity/error"
 	"fuux/internal/repository"
+	resourceRepository "fuux/internal/repository/resource"
+	"fuux/internal/usecase"
 	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"path/filepath"
+	"strings"
 )
 
 type pathHandler struct {
@@ -24,17 +28,95 @@ func Path(app *fiber.App) *pathHandler {
 
 	app.Post("path/",
 		middleware.Resource,
-		handler.create)
+		handler.addPath)
 
 	app.Put("path/",
 		middleware.Resource,
-		handler.update)
+		handler.updatePath)
 
 	app.Delete("path/:resource",
 		middleware.Resource,
 		handler.delete)
 
 	return &handler
+}
+
+func (h *pathHandler) updatePath(c *fiber.Ctx) error {
+	payload := &entity.Path{}
+
+	err := c.BodyParser(payload)
+	if err != nil {
+		return c.JSON(entity.ResponseError(errorEntity.Unknown))
+	}
+
+	pathModel, _, err := usecase.Resource.UpdatePath(payload)
+	if err != nil {
+		exe := errorEntity.ExposeError(err,
+			errorEntity.PathExist,
+			errorEntity.NameExist,
+			errorEntity.PhoneNumberInvalidate,
+			errorEntity.NameAlreadyUse,
+			errorEntity.PhoneNumberAlreadyUse,
+			errorEntity.PathAlreadyUse,
+		)
+
+		return c.JSON(entity.ResponseError(exe))
+	}
+
+	return c.JSON(pathModel)
+
+	//return c.JSON(entity.Response{Data: fiber.Map{
+	//	"info":         account,
+	//	"access_token": accessToken,
+	//	//"refresh_token": refreshToken,
+	//}})
+}
+
+func (h *pathHandler) addPath(c *fiber.Ctx) error {
+	payload := &entity.Path{}
+
+	err := c.BodyParser(payload)
+	if err != nil {
+		return c.JSON(entity.ResponseError(errorEntity.Unknown))
+	}
+
+	pathModel, _, err := usecase.Resource.AddPath(payload)
+	if err != nil {
+		exe := errorEntity.ExposeError(err,
+			errorEntity.FieldRequired,
+			errorEntity.EmailInvalidate,
+			errorEntity.PhoneNumberInvalidate,
+			errorEntity.NameAlreadyUse,
+			errorEntity.PhoneNumberAlreadyUse,
+			errorEntity.PathAlreadyUse,
+		)
+
+		return c.JSON(entity.ResponseError(exe))
+	}
+
+	return c.JSON(pathModel)
+
+	//return c.JSON(entity.Response{Data: fiber.Map{
+	//	"info":         account,
+	//	"access_token": accessToken,
+	//	//"refresh_token": refreshToken,
+	//}})
+}
+
+func (s *pathHandler) removePath(c *fiber.Ctx) error {
+	id := strings.Clone(c.Params("id"))
+
+	pathModel, err := resourceRepository.Resource.GetByID(id)
+	if err != nil {
+		return c.JSON(entity.ResponseError(errorEntity.UserRoleNotFound))
+	}
+
+	err = usecase.Resource.RemovePath(pathModel)
+	if err != nil {
+		return c.JSON(entity.ResponseError(errorEntity.Unknown))
+	}
+
+	return c.JSON(entity.Response{})
 }
 
 func (h *pathHandler) create(c *fiber.Ctx) error {

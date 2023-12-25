@@ -5,6 +5,7 @@ import (
 	"fuux/internal/api/handler/resource"
 	"fuux/internal/entity"
 	"fuux/internal/repository"
+	resourceRepository "fuux/internal/repository/resource"
 	service "fuux/internal/usecase"
 	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
@@ -42,10 +43,20 @@ func main() {
 		log.Fatal(err)
 	}
 
+	initDB := entity.Database{
+		Postgres:  db,
+		SQLServer: nil,
+	}
+
+	resourceRepository.Resource, err = resourceRepository.NewResource(&initDB)
+	if err != nil {
+		return
+	}
 	repository.File, err = repository.NewFile(db)
 	if err != nil {
 		return
 	}
+
 	resource.Path(app)
 	resource.Download(app)
 	resource.Upload(app)

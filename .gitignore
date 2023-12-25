@@ -2,3 +2,4 @@
 .idea
 data/*
 config/dev.yml
+config/sample.yml
