@@ -51,3 +51,17 @@ type PathSave struct {
 func (Path) TableName() string {
 	return "path"
 }
+
+type PathList struct {
+	Filter PathListFilter `json:"filter"`
+	Pagination
+}
+type PathListFilter struct {
+	Find PathListFilterFind `json:"find"`
+}
+
+type PathListFilterFind struct {
+	Mode  int      `json:"mode"`
+	Field []string `json:"field"`
+	Value string   `json:"value"`
+}

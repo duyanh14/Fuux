@@ -6,6 +6,7 @@ import (
 	"fuux/internal/entity"
 	"fuux/internal/repository"
 	resourceRepository "fuux/internal/repository/resource"
+	"fuux/internal/usecase"
 	service "fuux/internal/usecase"
 	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
@@ -60,6 +61,8 @@ func main() {
 	resource.Path(app)
 	resource.Download(app)
 	resource.Upload(app)
+
+	usecase.NewResource(config)
 
 	if err := app.Listen(":3000"); err != nil {
 		panic(err)

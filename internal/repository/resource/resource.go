@@ -43,6 +43,41 @@ func (r *resource) GetBy(by string, value string) (*entity.Path, error) {
 func (r *resource) GetByID(id string) (*entity.Path, error) {
 	return r.GetBy("id", id)
 }
+func (r *resource) List(list *entity.PathList) (*[]entity.Path, int64, error) {
+	rs := make([]entity.Path, 0)
+	var count int64
+
+	query := r.database.Postgres.Debug().Model(&entity.Path{})
+
+	filterFindValue := list.Filter.Find.Value
+	if filterFindValue != "" {
+		for _, v := range list.Filter.Find.Field {
+			mode := v + " = ?"
+			value := filterFindValue
+			if list.Filter.Find.Mode == 2 {
+				mode = "LOWER(" + v + ") LIKE LOWER(?)"
+				value = "%" + filterFindValue + "%"
+			}
+			query.Or(mode, value)
+		}
+	}
+
+	query.Count(&count)
+	if list.Limit == 0 {
+		list.Limit = int(count)
+	}
+
+	query.Limit(list.Limit).Offset((list.Page - 1) * list.Limit)
+
+	var paths []entity.Path
+	query.Find(&paths)
+
+	for _, path := range paths {
+		rs = append(rs, path)
+	}
+
+	return &rs, count, nil
+}
 
 func (r *resource) Save(path *entity.Path, save *entity.PathSave) error {
 	updateField := repository.UpdateField(save)

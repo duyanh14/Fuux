@@ -116,3 +116,11 @@ func (s *resource) UpdatePath(payload *entity.Path) (*entity.Path, string, error
 func (s *resource) RemovePath(id *entity.Path) error {
 	return resourceRepository.Resource.Delete(id)
 }
+
+func (s *resource) List(list *entity.PathList) (*[]entity.Path, int64, error) {
+	return resourceRepository.Resource.List(list)
+}
+
+func (s *resource) Get(id string) (*entity.Path, error) {
+	return resourceRepository.Resource.GetByID(id)
+}
