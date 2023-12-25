@@ -5,22 +5,18 @@ import (
 	"fuux/internal/api/middleware"
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	"fuux/internal/repository"
 	resourceRepository "fuux/internal/repository/resource"
 	"fuux/internal/usecase"
-	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/google/uuid"
-	"path/filepath"
 	"strings"
 )
 
-type pathHandler struct {
+type resourceAccessHandler struct {
 }
 
-func Path(app *fiber.App) *pathHandler {
-	handler := pathHandler{}
+func ResourceAccess(app *fiber.App) *resourceAccessHandler {
+	handler := resourceAccessHandler{}
 	app.Get("path/:id",
 		middleware.Resource,
 		handler.get)
@@ -43,8 +39,8 @@ func Path(app *fiber.App) *pathHandler {
 	return &handler
 }
 
-func (h *pathHandler) updatePath(c *fiber.Ctx) error {
-	payload := &entity.Path{}
+func (h *resourceAccessHandler) updatePath(c *fiber.Ctx) error {
+	payload := &entity.ResourceAccess{}
 
 	err := c.BodyParser(payload)
 	if err != nil {
@@ -53,7 +49,7 @@ func (h *pathHandler) updatePath(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 	payload.ID = id
 
-	pathModel, _, err := usecase.Resource.UpdatePath(payload)
+	pathModel, _, err := usecase.ResourceAccess.UpdatePath(payload)
 	if err != nil {
 		exe := errorEntity.ExposeError(err,
 			errorEntity.PathExist,
@@ -74,15 +70,15 @@ func (h *pathHandler) updatePath(c *fiber.Ctx) error {
 	//}})
 }
 
-func (h *pathHandler) addPath(c *fiber.Ctx) error {
-	payload := &entity.Path{}
+func (h *resourceAccessHandler) addPath(c *fiber.Ctx) error {
+	payload := &entity.ResourceAccess{}
 
 	err := c.BodyParser(payload)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	pathModel, _, err := usecase.Resource.AddPath(payload)
+	pathModel, _, err := usecase.ResourceAccess.AddPath(payload)
 	if err != nil {
 		exe := errorEntity.ExposeError(err,
 			errorEntity.FieldRequired,
@@ -102,15 +98,15 @@ func (h *pathHandler) addPath(c *fiber.Ctx) error {
 	//}})
 }
 
-func (s *pathHandler) removePath(c *fiber.Ctx) error {
+func (s *resourceAccessHandler) removePath(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 
-	pathModel, err := resourceRepository.Resource.GetByID(id)
+	resourceAccessModel, err := resourceRepository.ResourceAccess.GetByID(id)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
 	}
 
-	err = usecase.Resource.RemovePath(pathModel)
+	err = usecase.ResourceAccess.RemovePath(resourceAccessModel)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
@@ -118,8 +114,8 @@ func (s *pathHandler) removePath(c *fiber.Ctx) error {
 	return c.JSON(entity.SuccessResponse())
 }
 
-func (s *pathHandler) getList(c *fiber.Ctx) error {
-	var list entity.PathList
+func (s *resourceAccessHandler) getList(c *fiber.Ctx) error {
+	var list entity.ResourceList
 
 	err := json.Unmarshal(c.Body(), &list)
 	if err != nil {
@@ -127,7 +123,7 @@ func (s *pathHandler) getList(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	rs, count, err := usecase.Resource.List(&list)
+	rs, count, err := usecase.ResourceAccess.List(&list)
 	if err != nil {
 		return c.JSON(err)
 	}
@@ -138,139 +134,12 @@ func (s *pathHandler) getList(c *fiber.Ctx) error {
 	}})
 }
 
-func (s *pathHandler) get(c *fiber.Ctx) error {
+func (s *resourceAccessHandler) get(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 
-	pathModel, err := usecase.Resource.Get(id)
+	resourceAccessModel, err := usecase.ResourceAccess.Get(id)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
 	}
-	return c.JSON(pathModel)
-}
-
-func (h *pathHandler) create(c *fiber.Ctx) error {
-	var data map[string]string
-
-	if err := c.BodyParser(&data); err != nil {
-		return err
-	}
-
-	checkParams := pkg.AllKeyRequired(data, []string{"name", "path"})
-
-	if checkParams == false {
-		return c.JSON(fiber.Map{"error": "missing required parameter"})
-	}
-
-	name := data["name"]
-	path := filepath.Dir(data["path"])
-
-	var pathModel = entity.Path{
-		ID:   uuid.NewString(),
-		Name: name,
-		Path: path,
-	}
-
-	pathExist, _ := repository.MatchRecord("path", path, &entity.Path{})
-	if pathExist == true {
-		return c.JSON(fiber.Map{"error": "path already exists"})
-	}
-
-	result := repository.File.Db.Model(&entity.Path{}).Create(&pathModel)
-
-	if result.Error != nil {
-		return c.JSON(fiber.Map{"error": result.Error.Error()})
-	}
-
-	return c.JSON(pathModel)
-
-}
-func (h *pathHandler) update(c *fiber.Ctx) error {
-	var data map[string]interface{}
-
-	if err := c.BodyParser(&data); err != nil {
-		return err
-	}
-
-	nilValidate := pkg.IsMapContainNil(data, []string{"name", "path"})
-
-	if nilValidate {
-		return c.JSON(fiber.Map{"error": "you send empty value"})
-	}
-
-	pathExist, rawPath := repository.MatchRecord("id", data["id"], &entity.Path{})
-
-	if pathExist == false {
-		return c.JSON(fiber.Map{"error": "path does not exists"})
-	}
-	if rawPath == nil {
-		return c.JSON(fiber.Map{"error": "can not found your path"})
-	}
-
-	pathModel := rawPath.(*entity.Path)
-
-	if pathModel.ID != data["id"].(string) && filepath.Dir(pathModel.Path) == filepath.Dir(data["path"].(string)) {
-		return c.JSON(fiber.Map{"error": "this path exist in database"})
-	}
-
-	rs := repository.File.Db.Model(&pathModel).Updates(data)
-	if rs.Error != nil {
-		return c.JSON(fiber.Map{"error": rs.Error.Error()})
-	}
-	if rs.RowsAffected == 1 {
-		return c.JSON(fiber.Map{"success": "true"})
-	}
-
-	return nil
-}
-func (h *pathHandler) getOld(c *fiber.Ctx) error {
-
-	id := c.Params("resource")
-
-	pathExist, rawPath := repository.MatchRecord("id", id, &entity.Path{})
-	if pathExist == false {
-		return c.JSON(fiber.Map{"error": "path does not exists"})
-	}
-	if rawPath == nil {
-		return c.JSON(fiber.Map{"error": "can not found your path"})
-	}
-
-	path := rawPath.(*entity.Path)
-
-	return c.JSON(path)
-
-}
-func (h *pathHandler) getListOld(c *fiber.Ctx) error {
-	var records = []entity.Path{}
-
-	rs := repository.File.Db.Find(&records)
-	if rs.Error != nil {
-		return c.JSON(fiber.Map{"error": rs.Error.Error()})
-	}
-	if rs.RowsAffected > 0 {
-		return c.JSON(records)
-	}
-	return nil
-}
-func (h *pathHandler) delete(c *fiber.Ctx) error {
-	pathName := c.Params("resource")
-
-	pathExist, rawPath := repository.MatchRecord("path", pathName, &entity.Path{})
-	if pathExist == false {
-		return c.JSON(fiber.Map{"error": "path does not exists"})
-	}
-	if rawPath == nil {
-		return c.JSON(fiber.Map{"error": "can not found your path"})
-	}
-
-	path := pathExist.(*entity.Path)
-
-	var rs = repository.File.Db.Delete(&path)
-
-	if rs.Error != nil {
-		return c.JSON(fiber.Map{"error": rs.Error.Error()})
-	}
-	if rs.RowsAffected == 1 {
-		return c.JSON(fiber.Map{"success": "true"})
-	}
-	return nil
+	return c.JSON(resourceAccessModel)
 }

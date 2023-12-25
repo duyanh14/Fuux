@@ -64,4 +64,6 @@ var (
 	PathExist          = NewError(20000, "Path exist in database")
 	NameExist          = NewError(20001, "Name exist in database")
 	PathRecordNotFound = NewError(20002, "Path record not found")
+
+	ResourceAccessAlreadyUse = NewError(30001, "Resource Access already in use")
 )
