@@ -61,7 +61,11 @@ func (h *resourceAccessHandler) updatePath(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(exe))
 	}
 
-	return c.JSON(pathModel)
+	return c.JSON(entity.Response{
+		Error:   0,
+		Message: "",
+		Data:    pathModel,
+	})
 
 	//return c.JSON(entity.Response{Data: fiber.Map{
 	//	"info":         account,

@@ -64,11 +64,11 @@ func main() {
 		return
 	}
 
-	resource.Path(app)
+	resource.Resource(app)
+	resource.ResourceAccess(app)
+
 	resource.Download(app)
 	resource.Upload(app)
-
-	resource.ResourceAccess(app)
 
 	usecase.NewResource(config)
 	usecase.NewResourceAccess(config)

@@ -1,10 +1,10 @@
 package usecase
 
 import (
+	"fmt"
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
 	resourceRepository "fuux/internal/repository/resource"
-	"fuux/pkg"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
@@ -27,34 +27,34 @@ func (s *resourceAccess) Create(payload *entity.ResourceAccess) (*entity.Resourc
 	//	return nil, "", errorEntity.FieldRequired.Error
 	//}
 
-	var name string
-	var path string
-	name = payload.Name
-	path = payload.Path
-
 	/////////////////
 	// Name
-	_, err := resourceRepository.ResourceAccess.GetBy("name", name)
+	_, err := resourceRepository.ResourceAccess.GetBy("name", payload.Name)
 	if err == nil {
 		return nil, errorEntity.NameAlreadyUse.Error
 	}
 
 	// Path
-	_, err = resourceRepository.ResourceAccess.GetBy("path", path)
-	if err == nil {
-		return nil, errorEntity.PathAlreadyUse.Error
+	path, err := resourceRepository.Resource.GetBy("path", payload.ResourceRefer)
+	if err != nil {
+		return nil, err
+	}
+	if path == nil {
+		return nil, errorEntity.PathRecordNotFound.Error
 	}
 
+	fmt.Println(path)
 	/////////////////
 
 	//timeNow := time.Now()
 
 	model := &entity.ResourceAccess{
-		ID:         uuid.NewString(),
-		Name:       payload.Name,
-		Status:     entity.ResourceAccessStatusEnable, // edit sau
-		Expire:     payload.Expire,
-		Permission: payload.Permission,
+		ID:            uuid.NewString(),
+		Name:          payload.Name,
+		ResourceRefer: payload.ResourceRefer,
+		Status:        entity.ResourceAccessStatusEnable,
+		Expire:        payload.Expire,
+		Permission:    payload.Permission,
 	}
 
 	err = resourceRepository.ResourceAccess.Create(model)
@@ -72,9 +72,9 @@ func (s *resourceAccess) Create(payload *entity.ResourceAccess) (*entity.Resourc
 }
 
 func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.ResourceAccess, string, error) {
-	if pkg.IsStructContainNil(payload) {
-		return nil, "", errorEntity.FieldRequired.Error
-	}
+	//if pkg.IsStructContainNil(payload) {
+	//	return nil, "", errorEntity.FieldRequired.Error
+	//}
 
 	// Name
 	oldPathByID, err := resourceRepository.ResourceAccess.GetBy("id", payload.ID)
@@ -82,50 +82,36 @@ func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.Res
 		return nil, "", err
 	}
 
-	oldPathByPath, err := resourceRepository.ResourceAccess.GetBy("path", payload.Path)
+	oldPathByName, err := resourceRepository.Resource.GetBy("path", payload.ResourceRefer)
 	if err != nil {
 		if err != errorEntity.RecordNotFound.Error {
 			return nil, "", err
 		}
 	}
-
-	oldPathByName, err := resourceRepository.ResourceAccess.GetBy("name", payload.Name)
-	if err != nil {
-		if err != errorEntity.RecordNotFound.Error {
-			return nil, "", err
-		}
-	}
-
-	if oldPathByPath != nil {
-		if oldPathByID.ID != oldPathByPath.ID && payload.Path == oldPathByPath.Path {
-			return nil, "", errorEntity.PathExist.Error
-		}
-	}
-	if oldPathByName != nil {
-		if oldPathByID.ID != oldPathByName.ID && payload.Name == oldPathByName.Name {
-			return nil, "", errorEntity.NameExist.Error
-		}
-	}
+	fmt.Println(oldPathByName)
 
 	resourceAccessModel := &entity.ResourceAccess{
-		ID:     oldPathByID.ID,
-		Name:   oldPathByID.Name,
-		Path:   oldPathByID.Path,
-		Status: oldPathByID.Status,
-		Expire: oldPathByID.Expire,
+		ID:            oldPathByID.ID,
+		Name:          oldPathByID.Name,
+		ResourceRefer: oldPathByID.ResourceRefer,
+		Status:        oldPathByID.Status,
+		Expire:        oldPathByID.Expire,
 	}
 	resourceAccessSave := &entity.ResourceAccessSave{
-		Name:   payload.Name,
-		Status: oldPathByID.Status,
-		Expire: payload.Expire,
+		Name:       payload.Name,
+		Status:     oldPathByID.Status,
+		Permission: payload.Permission,
+		Expire:     payload.Expire,
 	}
 
 	resourceRepository.ResourceAccess.Save(resourceAccessModel, resourceAccessSave)
+
 	return &entity.ResourceAccess{
-		ID:     oldPathByID.ID,
-		Name:   resourceAccessSave.Name,
-		Status: resourceAccessSave.Status,
-		Expire: resourceAccessSave.Expire,
+		ID:         oldPathByID.ID,
+		Name:       resourceAccessSave.Name,
+		Permission: resourceAccessSave.Permission,
+		Status:     resourceAccessSave.Status,
+		Expire:     resourceAccessSave.Expire,
 	}, "", nil
 }
 

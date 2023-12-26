@@ -24,30 +24,30 @@ func (r *resource) Database() *entity.Database {
 	return r.database
 }
 
-func (r *resource) Create(pathModel *entity.Path) error {
-	result := r.database.Postgres.Create(pathModel)
+func (r *resource) Create(model *entity.Resource) error {
+	result := r.database.Postgres.Create(model)
 	if result.RowsAffected == 0 {
 		return errorEntity.Unknown.Error
 	}
 	return nil
 }
 
-func (r *resource) GetBy(by string, value string) (*entity.Path, error) {
-	path := &entity.Path{}
-	query := r.database.Postgres.Where(by+" = ?", value).Find(path)
+func (r *resource) GetBy(by string, value string) (*entity.Resource, error) {
+	model := &entity.Resource{}
+	query := r.database.Postgres.Where(by+" = ?", value).Find(model)
 	if query.RowsAffected == 0 {
 		return nil, errorEntity.RecordNotFound.Error
 	}
-	return path, nil
+	return model, nil
 }
-func (r *resource) GetByID(id string) (*entity.Path, error) {
+func (r *resource) GetByID(id string) (*entity.Resource, error) {
 	return r.GetBy("id", id)
 }
-func (r *resource) List(list *entity.PathList) (*[]entity.Path, int64, error) {
-	rs := make([]entity.Path, 0)
+func (r *resource) List(list *entity.ResourceList) (*[]entity.Resource, int64, error) {
+	rs := make([]entity.Resource, 0)
 	var count int64
 
-	query := r.database.Postgres.Debug().Model(&entity.Path{})
+	query := r.database.Postgres.Debug().Model(&entity.Resource{})
 
 	filterFindValue := list.Filter.Find.Value
 	if filterFindValue != "" {
@@ -69,17 +69,17 @@ func (r *resource) List(list *entity.PathList) (*[]entity.Path, int64, error) {
 
 	query.Limit(list.Limit).Offset((list.Page - 1) * list.Limit)
 
-	var paths []entity.Path
-	query.Find(&paths)
+	var resources []entity.Resource
+	query.Find(&resources)
 
-	for _, path := range paths {
-		rs = append(rs, path)
+	for _, resource := range resources {
+		rs = append(rs, resource)
 	}
 
 	return &rs, count, nil
 }
 
-func (r *resource) Save(path *entity.Path, save *entity.PathSave) error {
+func (r *resource) Save(path *entity.Resource, save *entity.ResourceSave) error {
 	updateField := repository.UpdateField(save)
 
 	query := r.database.Postgres.Model(path).Updates(updateField)
@@ -90,7 +90,7 @@ func (r *resource) Save(path *entity.Path, save *entity.PathSave) error {
 	return nil
 }
 
-func (r *resource) Delete(id *entity.Path) error {
+func (r *resource) Delete(id *entity.Resource) error {
 	result := r.database.Postgres.Delete(id)
 	if result.RowsAffected == 0 {
 		return errorEntity.Unknown.Error

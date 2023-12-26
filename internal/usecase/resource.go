@@ -20,7 +20,7 @@ func NewResource(config *entity.Config) (*resource, error) {
 	}
 	return Resource, nil
 }
-func (s *resource) AddPath(payload *entity.Path) (*entity.Path, string, error) {
+func (s *resource) AddResource(payload *entity.Resource) (*entity.Resource, string, error) {
 
 	if pkg.IsStructContainNil(payload) {
 		return nil, "", errorEntity.FieldRequired.Error
@@ -48,28 +48,28 @@ func (s *resource) AddPath(payload *entity.Path) (*entity.Path, string, error) {
 
 	//timeNow := time.Now()
 
-	pathModel := &entity.Path{
+	model := &entity.Resource{
 		ID:   uuid.NewString(),
 		Name: payload.Name,
 		Path: payload.Path,
 	}
 
-	resourceRepository.Resource.Create(pathModel)
-	return pathModel, "", nil
+	resourceRepository.Resource.Create(model)
+	return model, "", nil
 }
 
-func (s *resource) UpdatePath(payload *entity.Path) (*entity.Path, string, error) {
+func (s *resource) UpdatePath(payload *entity.Resource) (*entity.Resource, string, error) {
 	if pkg.IsStructContainNil(payload) {
 		return nil, "", errorEntity.FieldRequired.Error
 	}
 
 	// Name
-	oldPathByID, err := resourceRepository.Resource.GetBy("id", payload.ID)
+	oldResourceByID, err := resourceRepository.Resource.GetBy("id", payload.ID)
 	if err != nil {
 		return nil, "", err
 	}
 
-	oldPathByPath, err := resourceRepository.Resource.GetBy("path", payload.Path)
+	oldResourceByPath, err := resourceRepository.Resource.GetBy("path", payload.Path)
 	if err != nil {
 		if err != errorEntity.RecordNotFound.Error {
 			return nil, "", err
@@ -83,44 +83,44 @@ func (s *resource) UpdatePath(payload *entity.Path) (*entity.Path, string, error
 		}
 	}
 
-	if oldPathByPath != nil {
-		if oldPathByID.ID != oldPathByPath.ID && payload.Path == oldPathByPath.Path {
+	if oldResourceByPath != nil {
+		if oldResourceByID.ID != oldResourceByPath.ID && payload.Path == oldResourceByPath.Path {
 			return nil, "", errorEntity.PathExist.Error
 		}
 	}
 	if oldPathByName != nil {
-		if oldPathByID.ID != oldPathByName.ID && payload.Name == oldPathByName.Name {
+		if oldResourceByID.ID != oldPathByName.ID && payload.Name == oldPathByName.Name {
 			return nil, "", errorEntity.NameExist.Error
 		}
 	}
 
-	pathModel := &entity.Path{
-		ID:   oldPathByID.ID,
-		Name: oldPathByID.Name,
-		Path: oldPathByID.Path,
+	model := &entity.Resource{
+		ID:   oldResourceByID.ID,
+		Name: oldResourceByID.Name,
+		Path: oldResourceByID.Path,
 	}
-	pathSave := &entity.PathSave{
+	modelSave := &entity.ResourceSave{
 		Name: payload.Name,
 		Path: payload.Path,
 	}
 
-	resourceRepository.Resource.Save(pathModel, pathSave)
-	return &entity.Path{
-		ID:   oldPathByID.ID,
-		Name: pathSave.Name,
-		Path: pathSave.Path,
-		Date: oldPathByID.Date,
+	resourceRepository.Resource.Save(model, modelSave)
+	return &entity.Resource{
+		ID:   oldResourceByID.ID,
+		Name: modelSave.Name,
+		Path: modelSave.Path,
+		Date: oldResourceByID.Date,
 	}, "", nil
 }
 
-func (s *resource) RemovePath(id *entity.Path) error {
+func (s *resource) RemovePath(id *entity.Resource) error {
 	return resourceRepository.Resource.Delete(id)
 }
 
-func (s *resource) List(list *entity.PathList) (*[]entity.Path, int64, error) {
+func (s *resource) List(list *entity.ResourceList) (*[]entity.Resource, int64, error) {
 	return resourceRepository.Resource.List(list)
 }
 
-func (s *resource) Get(id string) (*entity.Path, error) {
+func (s *resource) Get(id string) (*entity.Resource, error) {
 	return resourceRepository.Resource.GetByID(id)
 }
