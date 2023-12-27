@@ -66,4 +66,8 @@ var (
 	PathRecordNotFound = NewError(20002, "Path record not found")
 
 	ResourceAccessAlreadyUse = NewError(30001, "Resource Access already in use")
+
+	ResourceAccessStatusIsDisable = NewError(30002, "Resource Access is disabled")
+	UploadDisallow                = NewError(30003, "Resource Access Upload disallow")
+	DownloadDisallow              = NewError(30004, "Resource Access Download disallow")
 )
