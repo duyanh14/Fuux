@@ -2,6 +2,7 @@ package resource
 
 import (
 	"fmt"
+	"fuux/internal/api/middleware"
 	"github.com/gofiber/fiber/v2"
 	"os"
 )
@@ -11,16 +12,16 @@ type uploadHandler struct {
 
 func Upload(app *fiber.App) *uploadHandler {
 	handler := uploadHandler{}
-	app.Post("/:resource", handler.upload)
+	app.Post("/:resource",
+		middleware.Auth,
+		middleware.AllowUpload,
+		handler.upload)
 
 	return &handler
 }
 
 func (h *uploadHandler) upload(c *fiber.Ctx) error {
-	access_token := c.Query("access_token")
-	if access_token != "1664661039" {
-		return c.SendString("access_token")
-	}
+
 	path := c.Query("path")
 	path = fmt.Sprintf("./data/%s", path)
 	createDirIfNotExist(path)

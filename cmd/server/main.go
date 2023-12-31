@@ -4,6 +4,11 @@ import (
 	"flag"
 	"fuux/internal/api/handler/resource"
 	"fuux/internal/entity"
+	"fuux/internal/repository"
+	resourceRepository "fuux/internal/repository/resource"
+	"fuux/internal/usecase"
+	service "fuux/internal/usecase"
+	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
 	"log"
 )
@@ -24,22 +29,49 @@ func f() *entity.Flag {
 func main() {
 	app := fiber.New()
 
-	//f := f()
-	//
-	//config, err := pkg.Config(f)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//db, err := service.NewDatabase(config)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	env := flag.String("env", "dev", "Environment")
 
-	//repository.NewFile(db)
+	flag.Parse()
+
+	if *env == "" {
+		log.Fatal("No environment")
+	}
+
+	config := pkg.NewConfig(*env)
+
+	db, err := service.NewDatabase(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	initDB := entity.Database{
+		Postgres:  db,
+		SQLServer: nil,
+	}
+
+	resourceRepository.Resource, err = resourceRepository.NewResource(&initDB)
+	if err != nil {
+		return
+	}
+
+	resourceRepository.ResourceAccess, err = resourceRepository.NewResourceAccess(&initDB)
+	if err != nil {
+		return
+	}
+
+	repository.File, err = repository.NewFile(db)
+	if err != nil {
+		return
+	}
+
+	resource.Resource(app)
+	resource.ResourceAccess(app)
 
 	resource.Download(app)
 	resource.Upload(app)
+
+	usecase.NewResource(config)
+	usecase.NewResourceAccess(config)
 
 	if err := app.Listen(":3000"); err != nil {
 		panic(err)

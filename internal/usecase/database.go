@@ -31,9 +31,10 @@ func NewDatabase(config *entity.Config) (*gorm.DB, error) {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	db.AutoMigrate(&entity.Resource{})
-	db.AutoMigrate(&entity.ResourceSecret{})
+	//db.AutoMigrate(&entity.Resource{})
+	//db.AutoMigrate(&entity.ResourceSecret{})
 	db.AutoMigrate(&entity.File{})
-
+	db.AutoMigrate(&entity.ResourceAccess{})
+	db.AutoMigrate(&entity.Resource{})
 	return db, nil
 }

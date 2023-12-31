@@ -1,5 +1,8 @@
 package middleware
 
 var (
-	Resource = resource()
+	Resource      = resource()
+	Auth          = auth()
+	AllowUpload   = allowUpload()
+	AllowDownload = allowDownload()
 )
