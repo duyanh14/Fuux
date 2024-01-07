@@ -7,7 +7,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.5.0
 	github.com/spf13/viper v1.16.0
-	go.uber.org/fx v1.20.0
+	go.uber.org/fx v1.20.1
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.4
 )

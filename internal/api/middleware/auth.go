@@ -3,7 +3,7 @@ package middleware
 import (
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	"fuux/internal/usecase"
+	"fuux/internal/usecase/file"
 	"github.com/gofiber/fiber/v2"
 	"strings"
 )
@@ -33,7 +33,7 @@ func _auth(c *fiber.Ctx) *errorEntity.Error {
 		return er
 	}
 
-	model, err := usecase.Upload.Auth(accessToken)
+	model, err := file.Upload.Auth(accessToken)
 	if err != nil {
 		return errorEntity.PermissionDenied
 	}

@@ -1,79 +1,61 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fuux/internal/api/handler/resource"
+	"fuux/internal/api/handler"
 	"fuux/internal/entity"
 	"fuux/internal/repository"
 	resourceRepository "fuux/internal/repository/resource"
 	"fuux/internal/usecase"
-	service "fuux/internal/usecase"
+	"fuux/internal/usecase/resource"
 	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
-	"log"
+	"go.uber.org/fx"
 )
 
-func f() *entity.Flag {
-	f := &entity.Flag{
-		Config: flag.String("conf", "", "config resource"),
-	}
-	flag.Parse()
+var (
+	flagConf string
+)
 
-	if f.Config == nil {
-		log.Fatal("no config resource")
-	}
+func init() {
+	flag.StringVar(&flagConf, "conf", "prod", "config path, eg: -conf config.yaml")
+}
 
-	return f
+func newConfig() (*entity.Config, error) {
+	return pkg.NewConfig(flagConf)
+}
+
+func newApp(lc fx.Lifecycle) *fiber.App {
+	app := fiber.New()
+
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			go app.Listen(":3000")
+			return nil
+		},
+	})
+
+	return app
 }
 
 func main() {
-	app := fiber.New()
-
-	env := flag.String("env", "dev", "Environment")
-
 	flag.Parse()
 
-	if *env == "" {
-		log.Fatal("No environment")
-	}
-
-	config := pkg.NewConfig(*env)
-
-	db, err := service.NewDatabase(config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	initDB := entity.Database{
-		Postgres:  db,
-		SQLServer: nil,
-	}
-
-	resourceRepository.Resource, err = resourceRepository.NewResource(&initDB)
-	if err != nil {
-		return
-	}
-
-	resourceRepository.ResourceAccess, err = resourceRepository.NewResourceAccess(&initDB)
-	if err != nil {
-		return
-	}
-
-	repository.File, err = repository.NewFile(db)
-	if err != nil {
-		return
-	}
-
-	resource.Resource(app)
-	resource.ResourceAccess(app)
-
-	resource.Download(app)
-	resource.Upload(app)
-
-	usecase.NewResource(config)
-	usecase.NewResourceAccess(config)
-
-	if err := app.Listen(":3000"); err != nil {
-		panic(err)
-	}
+	fx.New(
+		fx.Provide(
+			newConfig,
+			usecase.NewDatabase,
+			resourceRepository.NewResource,
+			resourceRepository.NewResourceAccess,
+			repository.NewFile,
+			handler.Resource,
+			handler.ResourceAccess,
+			handler.Download,
+			handler.Upload,
+			resource.NewResource,
+			resource.NewResourceAccess,
+			newApp),
+		fx.Invoke(func(*fiber.App) {}),
+	).Run()
 }
