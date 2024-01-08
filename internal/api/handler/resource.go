@@ -20,26 +20,86 @@ func NewResource(app *fiber.App, uc *usecase.Resource) *Resource {
 		uc: uc,
 	}
 
-	app.Get("resource/:id",
+	app.Get("/resource",
+		middleware.Resource,
+		handler.list)
+
+	app.Get("/resource/:id",
 		middleware.Resource,
 		handler.get)
-	app.Get("resource",
-		middleware.Resource,
-		handler.getList)
 
-	app.Post("resource",
+	app.Post("/resource",
 		middleware.Resource,
 		handler.create)
 
-	app.Put("resource/:id",
+	app.Put("/resource/:id",
 		middleware.Resource,
 		handler.update)
 
-	app.Delete("resource/:id",
+	app.Delete("/resource/:id",
 		middleware.Resource,
 		handler.delete)
 
 	return &handler
+}
+
+func (h *Resource) list(c *fiber.Ctx) error {
+	var list entity.ResourceList
+
+	err := json.Unmarshal(c.Body(), &list)
+	if err != nil {
+		log.Error(err)
+		return c.JSON(entity.ResponseError(errorEntity.Unknown))
+	}
+
+	rs, count, err := h.uc.List(&list)
+	if err != nil {
+		return c.JSON(err)
+	}
+
+	return c.JSON(entity.Response{Data: fiber.Map{
+		"list":  rs,
+		"count": count,
+	}})
+}
+
+func (h *Resource) get(c *fiber.Ctx) error {
+
+	id := strings.Clone(c.Params("id"))
+
+	model, err := h.uc.Get(id)
+	if err != nil {
+		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
+	}
+	return c.JSON(model)
+}
+
+func (h *Resource) create(c *fiber.Ctx) error {
+	payload := &entity.Resource{}
+
+	err := c.BodyParser(payload)
+	if err != nil {
+		return c.JSON(entity.ResponseError(errorEntity.Unknown))
+	}
+
+	model, _, err := h.uc.AddResource(payload)
+	if err != nil {
+		exe := errorEntity.ExposeError(err,
+			errorEntity.FieldRequired,
+			errorEntity.NameAlreadyUse,
+			errorEntity.PathAlreadyUse,
+		)
+
+		return c.JSON(entity.ResponseError(exe))
+	}
+
+	return c.JSON(model)
+
+	//return c.JSON(entity.Response{Data: fiber.Map{
+	//	"info":         account,
+	//	"access_token": accessToken,
+	//	//"refresh_token": refreshToken,
+	//}})
 }
 
 func (h *Resource) update(c *fiber.Ctx) error {
@@ -73,34 +133,6 @@ func (h *Resource) update(c *fiber.Ctx) error {
 	//}})
 }
 
-func (h *Resource) create(c *fiber.Ctx) error {
-	payload := &entity.Resource{}
-
-	err := c.BodyParser(payload)
-	if err != nil {
-		return c.JSON(entity.ResponseError(errorEntity.Unknown))
-	}
-
-	model, _, err := h.uc.AddResource(payload)
-	if err != nil {
-		exe := errorEntity.ExposeError(err,
-			errorEntity.FieldRequired,
-			errorEntity.NameAlreadyUse,
-			errorEntity.PathAlreadyUse,
-		)
-
-		return c.JSON(entity.ResponseError(exe))
-	}
-
-	return c.JSON(model)
-
-	//return c.JSON(entity.Response{Data: fiber.Map{
-	//	"info":         account,
-	//	"access_token": accessToken,
-	//	//"refresh_token": refreshToken,
-	//}})
-}
-
 func (h *Resource) delete(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 
@@ -115,34 +147,4 @@ func (h *Resource) delete(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(entity.SuccessResponse())
-}
-
-func (h *Resource) getList(c *fiber.Ctx) error {
-	var list entity.ResourceList
-
-	err := json.Unmarshal(c.Body(), &list)
-	if err != nil {
-		log.Error(err)
-		return c.JSON(entity.ResponseError(errorEntity.Unknown))
-	}
-
-	rs, count, err := h.uc.List(&list)
-	if err != nil {
-		return c.JSON(err)
-	}
-
-	return c.JSON(entity.Response{Data: fiber.Map{
-		"list":  rs,
-		"count": count,
-	}})
-}
-
-func (h *Resource) get(c *fiber.Ctx) error {
-	id := strings.Clone(c.Params("id"))
-
-	model, err := h.uc.Get(id)
-	if err != nil {
-		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
-	}
-	return c.JSON(model)
 }

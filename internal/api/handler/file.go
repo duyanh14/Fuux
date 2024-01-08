@@ -17,6 +17,7 @@ func NewFile(app *fiber.App) *File {
 		middleware.Auth,
 		middleware.AllowDownload,
 		handler.download)
+
 	app.Post("/:resource",
 		middleware.Auth,
 		middleware.AllowUpload,
@@ -26,7 +27,6 @@ func NewFile(app *fiber.App) *File {
 }
 
 func (h *File) upload(c *fiber.Ctx) error {
-
 	path := c.Query("path")
 	path = fmt.Sprintf("./data/%s", path)
 	createDirIfNotExist(path)

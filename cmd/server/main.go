@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	apiHandler "fuux/internal/api/handler"
 	"fuux/internal/entity"
 	"fuux/internal/repository"
@@ -11,7 +12,6 @@ import (
 	"fuux/pkg/database/postgres"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
-	"log"
 )
 
 var (
@@ -26,12 +26,12 @@ func newConfig() (*entity.Config, error) {
 	return pkg.NewConfig(flagConf)
 }
 
-func newApp(lc fx.Lifecycle) *fiber.App {
+func newApp(lc fx.Lifecycle, config *entity.Config) *fiber.App {
 	app := fiber.New()
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			go app.Listen(":3000")
+			go app.Listen(fmt.Sprintf(":%d", config.Listen))
 			return nil
 		},
 	})
@@ -39,15 +39,15 @@ func newApp(lc fx.Lifecycle) *fiber.App {
 	return app
 }
 
-func newDatabase(config *entity.Config) *entity.Database {
+func newDatabase(config *entity.Config) (*entity.Database, error) {
 	postgres, err := postgres.Connect(config.Database["postgres"])
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	return &entity.Database{
 		Postgres: postgres,
-	}
+	}, nil
 }
 
 func main() {

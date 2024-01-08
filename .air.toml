@@ -3,7 +3,7 @@ testdata_dir = "testdata"
 tmp_dir = "air"
 
 [build]
-args_bin = []
+args_bin = ["-conf=dev"]
 bin = "air\\main.exe"
 cmd = "go build -o ./air/main.exe fuux/cmd/server"
 delay = 1000
