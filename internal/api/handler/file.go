@@ -7,11 +7,16 @@ import (
 	"os"
 )
 
-type uploadHandler struct {
+type File struct {
 }
 
-func Upload(app *fiber.App) *uploadHandler {
-	handler := uploadHandler{}
+func NewFile(app *fiber.App) *File {
+	handler := File{}
+
+	app.Get("/:resource",
+		middleware.Auth,
+		middleware.AllowDownload,
+		handler.download)
 	app.Post("/:resource",
 		middleware.Auth,
 		middleware.AllowUpload,
@@ -20,7 +25,7 @@ func Upload(app *fiber.App) *uploadHandler {
 	return &handler
 }
 
-func (h *uploadHandler) upload(c *fiber.Ctx) error {
+func (h *File) upload(c *fiber.Ctx) error {
 
 	path := c.Query("path")
 	path = fmt.Sprintf("./data/%s", path)
@@ -50,4 +55,17 @@ func (h *uploadHandler) upload(c *fiber.Ctx) error {
 		}
 	}
 	return c.SendString("ok")
+}
+
+func (h *File) download(c *fiber.Ctx) error {
+	path := c.Query("path")
+	path = fmt.Sprintf("./data/%s", path)
+	c.Attachment(path)
+	return c.Download(path)
+}
+
+func createDirIfNotExist(dir string) {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		os.MkdirAll(dir, 0755)
+	}
 }

@@ -1,30 +1,25 @@
-package resource
+package repository
 
 import (
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	"fuux/internal/repository"
 )
 
-type resourceAccess struct {
+type ResourceAccess struct {
 	database *entity.Database
 }
 
-var ResourceAccess *resourceAccess
-
-func NewResourceAccess(database *entity.Database) (*resourceAccess, error) {
-	ResourceAccess = &resourceAccess{
+func NewResourceAccess(database *entity.Database) (*ResourceAccess, error) {
+	return &ResourceAccess{
 		database: database,
-	}
-
-	return ResourceAccess, nil
+	}, nil
 }
 
-func (r *resourceAccess) Database() *entity.Database {
+func (r *ResourceAccess) Database() *entity.Database {
 	return r.database
 }
 
-func (r *resourceAccess) Create(resourceAccess *entity.ResourceAccess) error {
+func (r *ResourceAccess) Create(resourceAccess *entity.ResourceAccess) error {
 	result := r.database.Postgres.Create(resourceAccess)
 	if result.RowsAffected == 0 {
 		return errorEntity.Unknown.Error
@@ -32,18 +27,23 @@ func (r *resourceAccess) Create(resourceAccess *entity.ResourceAccess) error {
 	return nil
 }
 
-func (r *resourceAccess) GetBy(by string, value string) (*entity.ResourceAccess, error) {
-	resourceAccessModel := &entity.ResourceAccess{}
-	query := r.database.Postgres.Where(by+" = ?", value).Find(resourceAccessModel)
+func (r *ResourceAccess) GetBy(by string, value string) (*entity.ResourceAccess, error) {
+	model := &entity.ResourceAccess{}
+	query := r.database.Postgres.Where(by+" = ?", value).Find(model)
+	if query.Error != nil {
+		return nil, query.Error
+	}
 	if query.RowsAffected == 0 {
 		return nil, errorEntity.RecordNotFound.Error
 	}
-	return resourceAccessModel, nil
+	return model, nil
 }
-func (r *resourceAccess) GetByID(id string) (*entity.ResourceAccess, error) {
+
+func (r *ResourceAccess) GetByID(id string) (*entity.ResourceAccess, error) {
 	return r.GetBy("id", id)
 }
-func (r *resourceAccess) List(list *entity.ResourceList) (*[]entity.ResourceAccess, int64, error) {
+
+func (r *ResourceAccess) List(list *entity.ResourceList) (*[]entity.ResourceAccess, int64, error) {
 	rs := make([]entity.ResourceAccess, 0)
 	var count int64
 
@@ -79,18 +79,18 @@ func (r *resourceAccess) List(list *entity.ResourceList) (*[]entity.ResourceAcce
 	return &rs, count, nil
 }
 
-func (r *resourceAccess) Save(resourceAccessModel *entity.ResourceAccess, save *entity.ResourceAccessSave) error {
-	updateField := repository.UpdateField(save)
-
-	query := r.database.Postgres.Model(resourceAccessModel).Updates(updateField)
-
-	if query.RowsAffected == 0 {
-		return errorEntity.UserAccountSaveFailed.Error
-	}
+func (r *ResourceAccess) Save(resourceAccessModel *entity.ResourceAccess, save *entity.ResourceAccessSave) error {
+	//updateField := UpdateField(save)
+	//
+	//query := r.database.Postgres.Model(resourceAccessModel).Updates(updateField)
+	//
+	//if query.RowsAffected == 0 {
+	//	return errorEntity.UserAccountSaveFailed.Error
+	//}
 	return nil
 }
 
-func (r *resourceAccess) Delete(id *entity.ResourceAccess) error {
+func (r *ResourceAccess) Delete(id *entity.ResourceAccess) error {
 	result := r.database.Postgres.Delete(id)
 	if result.RowsAffected == 0 {
 		return errorEntity.Unknown.Error

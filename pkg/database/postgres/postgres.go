@@ -1,4 +1,4 @@
-package usecase
+package postgres
 
 import (
 	"errors"
@@ -9,23 +9,14 @@ import (
 	"time"
 )
 
-func NewDatabase(config *entity.Config) (*gorm.DB, error) {
-	configDatabase := config.Database
-
-	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=disable", configDatabase.Host,
-		configDatabase.User,
-		configDatabase.Password,
-		configDatabase.Database,
-		configDatabase.Port)
+func Connect(cfg *entity.ConfigDatabase) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=disable", cfg.Host, cfg.User, cfg.Password, cfg.Database, cfg.Port)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, errors.New("can't connect Postgres")
+		return nil, errors.New("Can't connect Postgres")
 	}
 
 	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
 
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
@@ -34,8 +25,6 @@ func NewDatabase(config *entity.Config) (*gorm.DB, error) {
 	db.AutoMigrate(&entity.File{})
 	db.AutoMigrate(&entity.ResourceAccess{})
 	db.AutoMigrate(&entity.Resource{})
-
-	fmt.Println(123)
 
 	return db, nil
 }

@@ -1,37 +1,15 @@
 package repository
 
 import (
-	"gorm.io/gorm"
+	"fuux/internal/entity"
 )
 
-type file struct {
-	Db *gorm.DB
+type File struct {
+	database *entity.Database
 }
 
-var File *file
-
-func NewFile(db *gorm.DB) (*file, error) {
-	File = &file{
-		Db: db,
-	}
-
-	return File, nil
-}
-
-func MatchRecord(field string, value interface{}, model interface{}) (bool, modelOut interface{}) {
-	rs := File.Db.Where(field+" = ?", value).First(model)
-	if rs.Error != nil {
-		return false, model
-	} else if rs.RowsAffected > 0 {
-		return true, model
-	}
-	return false, model
-}
-
-func MatchRecordTableName(table, name string, value interface{}, model interface{}) bool {
-	rs := File.Db.Table(table).Where(name+" = ?", value).First(model)
-	if rs.RowsAffected > 0 {
-		return true
-	}
-	return false
+func NewFile(database *entity.Database) (*File, error) {
+	return &File{
+		database: database,
+	}, nil
 }

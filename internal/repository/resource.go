@@ -1,30 +1,25 @@
-package resource
+package repository
 
 import (
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	"fuux/internal/repository"
 )
 
-type resource struct {
+type Resource struct {
 	database *entity.Database
 }
 
-var Resource *resource
-
-func NewResource(database *entity.Database) (*resource, error) {
-	Resource = &resource{
+func NewResource(database *entity.Database) (*Resource, error) {
+	return &Resource{
 		database: database,
-	}
-
-	return Resource, nil
+	}, nil
 }
 
-func (r *resource) Database() *entity.Database {
+func (r *Resource) Database() *entity.Database {
 	return r.database
 }
 
-func (r *resource) Create(model *entity.Resource) error {
+func (r *Resource) Create(model *entity.Resource) error {
 	result := r.database.Postgres.Create(model)
 	if result.RowsAffected == 0 {
 		return errorEntity.Unknown.Error
@@ -32,18 +27,23 @@ func (r *resource) Create(model *entity.Resource) error {
 	return nil
 }
 
-func (r *resource) GetBy(by string, value string) (*entity.Resource, error) {
+func (r *Resource) GetBy(by string, value string) (*entity.Resource, error) {
 	model := &entity.Resource{}
 	query := r.database.Postgres.Where(by+" = ?", value).Find(model)
+	if query.Error != nil {
+		return nil, query.Error
+	}
 	if query.RowsAffected == 0 {
 		return nil, errorEntity.RecordNotFound.Error
 	}
 	return model, nil
 }
-func (r *resource) GetByID(id string) (*entity.Resource, error) {
+
+func (r *Resource) GetByID(id string) (*entity.Resource, error) {
 	return r.GetBy("id", id)
 }
-func (r *resource) List(list *entity.ResourceList) (*[]entity.Resource, int64, error) {
+
+func (r *Resource) List(list *entity.ResourceList) (*[]entity.Resource, int64, error) {
 	rs := make([]entity.Resource, 0)
 	var count int64
 
@@ -79,18 +79,18 @@ func (r *resource) List(list *entity.ResourceList) (*[]entity.Resource, int64, e
 	return &rs, count, nil
 }
 
-func (r *resource) Save(path *entity.Resource, save *entity.ResourceSave) error {
-	updateField := repository.UpdateField(save)
-
-	query := r.database.Postgres.Model(path).Updates(updateField)
-
-	if query.RowsAffected == 0 {
-		return errorEntity.UserAccountSaveFailed.Error
-	}
+func (r *Resource) Save(path *entity.Resource, save *entity.ResourceSave) error {
+	//updateField := UpdateField(save)
+	//
+	//query := r.database.Postgres.Model(path).Updates(updateField)
+	//
+	//if query.RowsAffected == 0 {
+	//	return errorEntity.UserAccountSaveFailed.Error
+	//}
 	return nil
 }
 
-func (r *resource) Delete(id *entity.Resource) error {
+func (r *Resource) Delete(id *entity.Resource) error {
 	result := r.database.Postgres.Delete(id)
 	if result.RowsAffected == 0 {
 		return errorEntity.Unknown.Error

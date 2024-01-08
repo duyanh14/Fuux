@@ -1,10 +1,10 @@
 package entity
 
 type Config struct {
-	Env      string         `mapstructure:"env"`
-	Listen   string         `mapstructure:"listen"`
-	Database ConfigDatabase `mapstructure:"database"`
-	JWT      ConfigJWT      `mapstructure:"jwt"`
+	Env      string                     `mapstructure:"env"`
+	Listen   string                     `mapstructure:"listen"`
+	Database map[string]*ConfigDatabase `mapstructure:"database"`
+	JWT      ConfigJWT                  `mapstructure:"jwt"`
 }
 
 type ConfigDatabase struct {

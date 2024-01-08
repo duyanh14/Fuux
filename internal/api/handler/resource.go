@@ -5,18 +5,21 @@ import (
 	"fuux/internal/api/middleware"
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	resourceRepository "fuux/internal/repository/resource"
-	"fuux/internal/usecase/resource"
+	"fuux/internal/usecase"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strings"
 )
 
-type resourceHandler struct {
+type Resource struct {
+	uc *usecase.Resource
 }
 
-func Resource(app *fiber.App) *resourceHandler {
-	handler := resourceHandler{}
+func NewResource(app *fiber.App, uc *usecase.Resource) *Resource {
+	handler := Resource{
+		uc: uc,
+	}
+
 	app.Get("resource/:id",
 		middleware.Resource,
 		handler.get)
@@ -39,7 +42,7 @@ func Resource(app *fiber.App) *resourceHandler {
 	return &handler
 }
 
-func (h *resourceHandler) update(c *fiber.Ctx) error {
+func (h *Resource) update(c *fiber.Ctx) error {
 	payload := &entity.Resource{}
 
 	err := c.BodyParser(payload)
@@ -49,7 +52,7 @@ func (h *resourceHandler) update(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 	payload.ID = id
 
-	model, _, err := resource.Resource.UpdatePath(payload)
+	model, _, err := h.uc.UpdatePath(payload)
 	if err != nil {
 		exe := errorEntity.ExposeError(err,
 			errorEntity.PathExist,
@@ -70,7 +73,7 @@ func (h *resourceHandler) update(c *fiber.Ctx) error {
 	//}})
 }
 
-func (h *resourceHandler) create(c *fiber.Ctx) error {
+func (h *Resource) create(c *fiber.Ctx) error {
 	payload := &entity.Resource{}
 
 	err := c.BodyParser(payload)
@@ -78,7 +81,7 @@ func (h *resourceHandler) create(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	model, _, err := resource.Resource.AddResource(payload)
+	model, _, err := h.uc.AddResource(payload)
 	if err != nil {
 		exe := errorEntity.ExposeError(err,
 			errorEntity.FieldRequired,
@@ -98,15 +101,15 @@ func (h *resourceHandler) create(c *fiber.Ctx) error {
 	//}})
 }
 
-func (s *resourceHandler) delete(c *fiber.Ctx) error {
+func (h *Resource) delete(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 
-	model, err := resourceRepository.Resource.GetByID(id)
+	model, err := h.uc.Get(id)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
 	}
 
-	err = resource.Resource.RemovePath(model)
+	err = h.uc.RemovePath(model)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
@@ -114,7 +117,7 @@ func (s *resourceHandler) delete(c *fiber.Ctx) error {
 	return c.JSON(entity.SuccessResponse())
 }
 
-func (s *resourceHandler) getList(c *fiber.Ctx) error {
+func (h *Resource) getList(c *fiber.Ctx) error {
 	var list entity.ResourceList
 
 	err := json.Unmarshal(c.Body(), &list)
@@ -123,7 +126,7 @@ func (s *resourceHandler) getList(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	rs, count, err := resource.Resource.List(&list)
+	rs, count, err := h.uc.List(&list)
 	if err != nil {
 		return c.JSON(err)
 	}
@@ -134,10 +137,10 @@ func (s *resourceHandler) getList(c *fiber.Ctx) error {
 	}})
 }
 
-func (s *resourceHandler) get(c *fiber.Ctx) error {
+func (h *Resource) get(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 
-	model, err := resource.Resource.Get(id)
+	model, err := h.uc.Get(id)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
 	}

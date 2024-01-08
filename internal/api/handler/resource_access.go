@@ -5,18 +5,21 @@ import (
 	"fuux/internal/api/middleware"
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	resourceRepository "fuux/internal/repository/resource"
-	"fuux/internal/usecase/resource"
+	"fuux/internal/usecase"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strings"
 )
 
-type resourceAccessHandler struct {
+type ResourceAccess struct {
+	uc *usecase.ResourceAccess
 }
 
-func ResourceAccess(app *fiber.App) *resourceAccessHandler {
-	handler := resourceAccessHandler{}
+func NewResourceAccess(app *fiber.App, uc *usecase.ResourceAccess) *ResourceAccess {
+	handler := ResourceAccess{
+		uc: uc,
+	}
+
 	app.Get("path/access/:id",
 		middleware.Resource,
 		handler.get)
@@ -39,7 +42,7 @@ func ResourceAccess(app *fiber.App) *resourceAccessHandler {
 	return &handler
 }
 
-func (h *resourceAccessHandler) updatePath(c *fiber.Ctx) error {
+func (h *ResourceAccess) updatePath(c *fiber.Ctx) error {
 	payload := &entity.ResourceAccess{}
 
 	err := c.BodyParser(payload)
@@ -49,7 +52,7 @@ func (h *resourceAccessHandler) updatePath(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 	payload.ID = id
 
-	pathModel, _, err := resource.ResourceAccess.UpdatePath(payload)
+	pathModel, _, err := h.uc.UpdatePath(payload)
 	if err != nil {
 		exe := errorEntity.ExposeError(err,
 			errorEntity.PathExist,
@@ -74,7 +77,7 @@ func (h *resourceAccessHandler) updatePath(c *fiber.Ctx) error {
 	//}})
 }
 
-func (h *resourceAccessHandler) addPath(c *fiber.Ctx) error {
+func (h *ResourceAccess) addPath(c *fiber.Ctx) error {
 	payload := &entity.ResourceAccess{}
 
 	err := c.BodyParser(payload)
@@ -82,7 +85,7 @@ func (h *resourceAccessHandler) addPath(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	pathModel, err := resource.ResourceAccess.Create(payload)
+	pathModel, err := h.uc.Create(payload)
 	if err != nil {
 		exe := errorEntity.ExposeError(err,
 			errorEntity.FieldRequired,
@@ -104,15 +107,15 @@ func (h *resourceAccessHandler) addPath(c *fiber.Ctx) error {
 	//}})
 }
 
-func (s *resourceAccessHandler) removePath(c *fiber.Ctx) error {
+func (h *ResourceAccess) removePath(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 
-	resourceAccessModel, err := resourceRepository.ResourceAccess.GetByID(id)
+	resourceAccessModel, err := h.uc.Get(id)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
 	}
 
-	err = resource.ResourceAccess.RemovePath(resourceAccessModel)
+	err = h.uc.RemovePath(resourceAccessModel)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
@@ -120,7 +123,7 @@ func (s *resourceAccessHandler) removePath(c *fiber.Ctx) error {
 	return c.JSON(entity.SuccessResponse())
 }
 
-func (s *resourceAccessHandler) getList(c *fiber.Ctx) error {
+func (s *ResourceAccess) getList(c *fiber.Ctx) error {
 	var list entity.ResourceList
 
 	err := json.Unmarshal(c.Body(), &list)
@@ -129,7 +132,7 @@ func (s *resourceAccessHandler) getList(c *fiber.Ctx) error {
 		return c.JSON(entity.ResponseError(errorEntity.Unknown))
 	}
 
-	rs, count, err := resource.ResourceAccess.List(&list)
+	rs, count, err := s.uc.List(&list)
 	if err != nil {
 		return c.JSON(err)
 	}
@@ -140,10 +143,10 @@ func (s *resourceAccessHandler) getList(c *fiber.Ctx) error {
 	}})
 }
 
-func (s *resourceAccessHandler) get(c *fiber.Ctx) error {
+func (s *ResourceAccess) get(c *fiber.Ctx) error {
 	id := strings.Clone(c.Params("id"))
 
-	resourceAccessModel, err := resource.ResourceAccess.Get(id)
+	resourceAccessModel, err := s.uc.Get(id)
 	if err != nil {
 		return c.JSON(entity.ResponseError(errorEntity.PathRecordNotFound))
 	}

@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"fuux/internal/api/handler"
+	apiHandler "fuux/internal/api/handler"
 	"fuux/internal/entity"
 	"fuux/internal/repository"
-	resourceRepository "fuux/internal/repository/resource"
 	"fuux/internal/usecase"
-	"fuux/internal/usecase/resource"
 	"fuux/pkg"
+	"fuux/pkg/database/postgres"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
+	"log"
 )
 
 var (
@@ -39,22 +39,33 @@ func newApp(lc fx.Lifecycle) *fiber.App {
 	return app
 }
 
+func newDatabase(config *entity.Config) *entity.Database {
+	postgres, err := postgres.Connect(config.Database["postgres"])
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return &entity.Database{
+		Postgres: postgres,
+	}
+}
+
 func main() {
 	flag.Parse()
 
 	fx.New(
 		fx.Provide(
 			newConfig,
-			usecase.NewDatabase,
-			resourceRepository.NewResource,
-			resourceRepository.NewResourceAccess,
+			newDatabase,
 			repository.NewFile,
-			handler.Resource,
-			handler.ResourceAccess,
-			handler.Download,
-			handler.Upload,
-			resource.NewResource,
-			resource.NewResourceAccess,
+			repository.NewResource,
+			repository.NewResourceAccess,
+			usecase.NewFile,
+			usecase.NewResource,
+			usecase.NewResourceAccess,
+			apiHandler.NewResource,
+			apiHandler.NewResourceAccess,
+			apiHandler.NewFile,
 			newApp),
 		fx.Invoke(func(*fiber.App) {}),
 	).Run()
