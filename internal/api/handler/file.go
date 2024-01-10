@@ -13,7 +13,7 @@ type File struct {
 func NewFile(app *fiber.App) *File {
 	handler := File{}
 
-	app.Get("/:resource",
+	app.Get("/:   ",
 		middleware.Auth,
 		middleware.AllowDownload,
 		handler.download)

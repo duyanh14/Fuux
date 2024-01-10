@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"fuux/internal/api/middleware"
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
@@ -12,33 +13,39 @@ import (
 )
 
 type ResourceAccess struct {
-	uc *usecase.ResourceAccess
+	uc    *usecase.ResourceAccess
+	group fiber.Router
 }
 
-func NewResourceAccess(app *fiber.App, uc *usecase.ResourceAccess) *ResourceAccess {
+func NewResourceAccess(resourceHandler *Resource, uc *usecase.ResourceAccess) *ResourceAccess {
+	group := resourceHandler.group.Group("/access")
+
 	handler := ResourceAccess{
-		uc: uc,
+		uc:    uc,
+		group: group,
 	}
 
-	app.Get("resource/access",
+	group.Get("/",
 		middleware.Resource,
 		handler.list)
 
-	app.Get("resource/access/:id",
+	group.Get("/:id",
 		middleware.Resource,
 		handler.get)
 
-	app.Post("resource/access",
+	group.Post("/",
 		middleware.Resource,
 		handler.create)
 
-	app.Put("resource/access/:id",
+	group.Put("/:id",
 		middleware.Resource,
 		handler.update)
 
-	app.Delete("resource/access/:id",
+	group.Delete("/:id",
 		middleware.Resource,
 		handler.delete)
+
+	fmt.Println(123)
 
 	return &handler
 }

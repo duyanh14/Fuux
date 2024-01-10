@@ -12,31 +12,35 @@ import (
 )
 
 type Resource struct {
-	uc *usecase.Resource
+	uc    *usecase.Resource
+	group fiber.Router
 }
 
 func NewResource(app *fiber.App, uc *usecase.Resource) *Resource {
+	group := app.Group("/resource", middleware.InternalPermission)
+
 	handler := Resource{
-		uc: uc,
+		uc:    uc,
+		group: group,
 	}
 
-	app.Get("/resource",
+	group.Get("/",
 		middleware.Resource,
 		handler.list)
 
-	app.Get("/resource/:id",
+	group.Get("/:id",
 		middleware.Resource,
 		handler.get)
 
-	app.Post("/resource",
+	group.Post("/",
 		middleware.Resource,
 		handler.create)
 
-	app.Put("/resource/:id",
+	group.Put("/:id",
 		middleware.Resource,
 		handler.update)
 
-	app.Delete("/resource/:id",
+	group.Delete("/:id",
 		middleware.Resource,
 		handler.delete)
 

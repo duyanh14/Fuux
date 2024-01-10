@@ -5,4 +5,8 @@ var (
 	Auth          = auth()
 	AllowUpload   = allowUpload()
 	AllowDownload = allowDownload()
+
+	/////////
+
+	InternalPermission = internalPermission()
 )
