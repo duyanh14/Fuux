@@ -23,17 +23,18 @@ import (
 //	return &config, nil
 //}
 
-var Config *entity.Config
+func NewConfig(env string) (*entity.Config, error) {
+	var config *entity.Config
 
-func NewConfig(env string) *entity.Config {
 	viper.SetConfigType("yml")
 	viper.SetConfigName(env)
 	viper.AddConfigPath("./config")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalln(err)
 	}
-	if err := viper.Unmarshal(&Config); err != nil {
+	if err := viper.Unmarshal(&config); err != nil {
 		log.Fatalln(err)
 	}
-	return Config
+
+	return config, nil
 }

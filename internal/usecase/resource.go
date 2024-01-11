@@ -3,25 +3,24 @@ package usecase
 import (
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	resourceRepository "fuux/internal/repository/resource"
+	"fuux/internal/repository"
 	"fuux/pkg"
 	"github.com/google/uuid"
 )
 
-type resource struct {
+type Resource struct {
 	config *entity.Config
+	repo   *repository.Resource
 }
 
-var Resource *resource
-
-func NewResource(config *entity.Config) (*resource, error) {
-	Resource = &resource{
+func NewResource(config *entity.Config, repo *repository.Resource) (*Resource, error) {
+	return &Resource{
 		config: config,
-	}
-	return Resource, nil
+		repo:   repo,
+	}, nil
 }
-func (s *resource) AddResource(payload *entity.Resource) (*entity.Resource, string, error) {
 
+func (s *Resource) AddResource(payload *entity.Resource) (*entity.Resource, string, error) {
 	if pkg.IsStructContainNil(payload) {
 		return nil, "", errorEntity.FieldRequired.Error
 	}
@@ -33,13 +32,13 @@ func (s *resource) AddResource(payload *entity.Resource) (*entity.Resource, stri
 
 	/////////////////
 	// Name
-	_, err := resourceRepository.Resource.GetBy("name", name)
+	_, err := s.repo.GetBy("name", name)
 	if err == nil {
 		return nil, "", errorEntity.NameAlreadyUse.Error
 	}
 
 	// Path
-	_, err = resourceRepository.Resource.GetBy("path", path)
+	_, err = s.repo.GetBy("path", path)
 	if err == nil {
 		return nil, "", errorEntity.PathAlreadyUse.Error
 	}
@@ -54,29 +53,29 @@ func (s *resource) AddResource(payload *entity.Resource) (*entity.Resource, stri
 		Path: payload.Path,
 	}
 
-	resourceRepository.Resource.Create(model)
+	s.repo.Create(model)
 	return model, "", nil
 }
 
-func (s *resource) UpdatePath(payload *entity.Resource) (*entity.Resource, string, error) {
+func (s *Resource) UpdatePath(payload *entity.Resource) (*entity.Resource, string, error) {
 	if pkg.IsStructContainNil(payload) {
 		return nil, "", errorEntity.FieldRequired.Error
 	}
 
 	// Name
-	oldResourceByID, err := resourceRepository.Resource.GetBy("id", payload.ID)
+	oldResourceByID, err := s.repo.GetBy("id", payload.ID)
 	if err != nil {
 		return nil, "", err
 	}
 
-	oldResourceByPath, err := resourceRepository.Resource.GetBy("path", payload.Path)
+	oldResourceByPath, err := s.repo.GetBy("path", payload.Path)
 	if err != nil {
 		if err != errorEntity.RecordNotFound.Error {
 			return nil, "", err
 		}
 	}
 
-	oldPathByName, err := resourceRepository.Resource.GetBy("name", payload.Name)
+	oldPathByName, err := s.repo.GetBy("name", payload.Name)
 	if err != nil {
 		if err != errorEntity.RecordNotFound.Error {
 			return nil, "", err
@@ -104,7 +103,7 @@ func (s *resource) UpdatePath(payload *entity.Resource) (*entity.Resource, strin
 		Path: payload.Path,
 	}
 
-	resourceRepository.Resource.Save(model, modelSave)
+	s.repo.Save(model, modelSave)
 	return &entity.Resource{
 		ID:   oldResourceByID.ID,
 		Name: modelSave.Name,
@@ -113,14 +112,14 @@ func (s *resource) UpdatePath(payload *entity.Resource) (*entity.Resource, strin
 	}, "", nil
 }
 
-func (s *resource) RemovePath(id *entity.Resource) error {
-	return resourceRepository.Resource.Delete(id)
+func (s *Resource) RemovePath(id *entity.Resource) error {
+	return s.repo.Delete(id)
 }
 
-func (s *resource) List(list *entity.ResourceList) (*[]entity.Resource, int64, error) {
-	return resourceRepository.Resource.List(list)
+func (s *Resource) List(list *entity.ResourceList) (*[]entity.Resource, int64, error) {
+	return s.repo.List(list)
 }
 
-func (s *resource) Get(id string) (*entity.Resource, error) {
-	return resourceRepository.Resource.GetByID(id)
+func (s *Resource) Get(id string) (*entity.Resource, error) {
+	return s.repo.GetByID(id)
 }

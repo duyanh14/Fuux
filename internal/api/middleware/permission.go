@@ -3,8 +3,26 @@ package middleware
 import (
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
+	"fuux/pkg"
 	"github.com/gofiber/fiber/v2"
 )
+
+func internalPermission(config *entity.Config) func(*fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+		ip := c.Get("X-Real-IP")
+
+		intIP, err := pkg.InternalIP(ip)
+		if err != nil {
+			return c.JSON(entity.ResponseError(errorEntity.PermissionDenied))
+		}
+
+		if intIP {
+			return c.Next()
+		}
+
+		return c.JSON(entity.ResponseError(errorEntity.PermissionDenied))
+	}
+}
 
 func allowUpload() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {

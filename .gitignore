@@ -2,4 +2,6 @@
 .idea
 data/*
 config/dev.yml
+config/prod.yml
 config/sample.yml
+air

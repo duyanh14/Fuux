@@ -3,7 +3,6 @@ package entity
 import "gorm.io/gorm"
 
 type Database struct {
-	Postgres  *gorm.DB
-	SQLServer *gorm.DB
+	Postgres *gorm.DB
 	//	Redis     *redis.Client
 }

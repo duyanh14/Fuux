@@ -4,38 +4,30 @@ import (
 	"fmt"
 	"fuux/internal/entity"
 	errorEntity "fuux/internal/entity/error"
-	resourceRepository "fuux/internal/repository/resource"
+	"fuux/internal/repository"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 
-type resourceAccess struct {
+type ResourceAccess struct {
 	config *entity.Config
+	repo   *repository.ResourceAccess
 }
 
-var ResourceAccess *resourceAccess
-
-func NewResourceAccess(config *entity.Config) (*resourceAccess, error) {
-	ResourceAccess = &resourceAccess{
+func NewResourceAccess(config *entity.Config, repo *repository.ResourceAccess) (*ResourceAccess, error) {
+	return &ResourceAccess{
 		config: config,
-	}
-	return ResourceAccess, nil
+		repo:   repo,
+	}, nil
 }
-func (s *resourceAccess) Create(payload *entity.ResourceAccess) (*entity.ResourceAccess, error) {
 
-	//if pkg.IsStructContainNil(payload) {
-	//	return nil, "", errorEntity.FieldRequired.Error
-	//}
-
-	/////////////////
-	// Name
-	_, err := resourceRepository.ResourceAccess.GetBy("name", payload.Name)
+func (s *ResourceAccess) Create(payload *entity.ResourceAccess) (*entity.ResourceAccess, error) {
+	_, err := s.repo.GetBy("name", payload.Name)
 	if err == nil {
 		return nil, errorEntity.NameAlreadyUse.Error
 	}
 
-	// Path
-	path, err := resourceRepository.Resource.GetBy("path", payload.ResourceRefer)
+	path, err := s.repo.GetByID(payload.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +49,7 @@ func (s *resourceAccess) Create(payload *entity.ResourceAccess) (*entity.Resourc
 		Permission:    payload.Permission,
 	}
 
-	err = resourceRepository.ResourceAccess.Create(model)
+	err = s.repo.Create(model)
 	if err != nil {
 		return nil, err
 	}
@@ -71,18 +63,18 @@ func (s *resourceAccess) Create(payload *entity.ResourceAccess) (*entity.Resourc
 	return model, nil
 }
 
-func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.ResourceAccess, string, error) {
+func (s *ResourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.ResourceAccess, string, error) {
 	//if pkg.IsStructContainNil(payload) {
 	//	return nil, "", errorEntity.FieldRequired.Error
 	//}
 
 	// Name
-	oldPathByID, err := resourceRepository.ResourceAccess.GetBy("id", payload.ID)
+	oldPathByID, err := s.repo.GetBy("id", payload.ID)
 	if err != nil {
 		return nil, "", err
 	}
 
-	oldPathByName, err := resourceRepository.Resource.GetBy("path", payload.ResourceRefer)
+	oldPathByName, err := s.repo.GetBy("path", payload.ResourceRefer)
 	if err != nil {
 		if err != errorEntity.RecordNotFound.Error {
 			return nil, "", err
@@ -104,7 +96,7 @@ func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.Res
 		Expire:     payload.Expire,
 	}
 
-	resourceRepository.ResourceAccess.Save(resourceAccessModel, resourceAccessSave)
+	s.repo.Save(resourceAccessModel, resourceAccessSave)
 
 	return &entity.ResourceAccess{
 		ID:         oldPathByID.ID,
@@ -115,18 +107,19 @@ func (s *resourceAccess) UpdatePath(payload *entity.ResourceAccess) (*entity.Res
 	}, "", nil
 }
 
-func (s *resourceAccess) RemovePath(id *entity.ResourceAccess) error {
-	return resourceRepository.ResourceAccess.Delete(id)
+func (s *ResourceAccess) RemovePath(id *entity.ResourceAccess) error {
+	return s.repo.Delete(id)
 }
 
-func (s *resourceAccess) List(list *entity.ResourceList) (*[]entity.ResourceAccess, int64, error) {
-	return resourceRepository.ResourceAccess.List(list)
+func (s *ResourceAccess) List(list *entity.ResourceList) (*[]entity.ResourceAccess, int64, error) {
+	return s.repo.List(list)
 }
 
-func (s *resourceAccess) Get(id string) (*entity.ResourceAccess, error) {
-	return resourceRepository.ResourceAccess.GetByID(id)
+func (s *ResourceAccess) Get(id string) (*entity.ResourceAccess, error) {
+	return s.repo.GetByID(id)
 }
-func (s *resourceAccess) TokenGenerate(resourceAccess *entity.ResourceAccess) (string, error) {
+
+func (s *ResourceAccess) TokenGenerate(resourceAccess *entity.ResourceAccess) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
