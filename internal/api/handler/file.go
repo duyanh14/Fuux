@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// File handler
 type File struct {
 }
 
