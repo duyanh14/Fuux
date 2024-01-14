@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func internalPermission(config *entity.Config) func(*fiber.Ctx) error {
+func internalPermission() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		ip := c.Get("X-Real-IP")
 
